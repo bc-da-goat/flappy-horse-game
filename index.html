@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Horse Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            border: 3px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: #87CEEB;
+        }
+        h1 {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+        }
+        .instructions {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        #loading {
+            color: white;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐴 Flappy Horse Game 🐴</h1>
+    <div class="instructions">
+        <strong>Controls:</strong> Press SPACEBAR to jump/flap | Avoid the obstacles!
+    </div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="loading">Loading game assets...</div>
+
+    <script>
+        // Constants
+        const SCREEN_WIDTH = 800;
+        const SCREEN_HEIGHT = 600;
+        const FPS = 60;
+        const GRAVITY = 0.5;
+        const JUMP_STRENGTH = -8;
+        const OBSTACLE_SPEED = 3;
+        const OBSTACLE_SPAWN_RATE = 90;
+        const SCROLL_SPEED = 2;
+
+        // Get canvas and context
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const loadingDiv = document.getElementById('loading');
+
+        // Game state
+        let gameState = {
+            player: null,
+            obstacles: [],
+            score: 0,
+            gameOver: false,
+            frameCount: 0,
+            bgOffset: 0,
+            images: {},
+            imagesLoaded: 0,
+            totalImages: 0
+        };
+
+        // Image paths
+        const imagePaths = {
+            player: 'Images/Flying_horse_with_wings/rotations/east.png',
+            background: 'Images/background.jfif',
+            obstacles: [
+                'Images/meteor.jfif',
+                'Images/missile.png',
+                'Images/ufo.png',
+                'Images/Man_drving_a_small_airplane/rotations/west.png'
+            ]
+        };
+
+        // Load images
+        function loadImage(key, path) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    gameState.images[key] = img;
+                    gameState.imagesLoaded++;
+                    loadingDiv.textContent = `Loading... ${gameState.imagesLoaded}/${gameState.totalImages}`;
+                    resolve(img);
+                };
+                img.onerror = () => {
+                    console.warn(`Failed to load image: ${path}`);
+                    gameState.imagesLoaded++;
+                    resolve(null);
+                };
+                img.src = path;
+            });
+        }
+
+        // Load all images
+        async function loadAllImages() {
+            gameState.totalImages = 1 + 1 + imagePaths.obstacles.length; // player + bg + obstacles
+            
+            await loadImage('player', imagePaths.player);
+            await loadImage('background', imagePaths.background);
+            
+            for (let i = 0; i < imagePaths.obstacles.length; i++) {
+                await loadImage(`obstacle_${i}`, imagePaths.obstacles[i]);
+            }
+            
+            loadingDiv.style.display = 'none';
+            initGame();
+        }
+
+        // Player class
+        class Player {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.velocity = 0;
+                this.width = 60;
+                this.height = 60;
+                this.image = gameState.images.player;
+                
+                // Smaller hitbox for player too (70% of sprite)
+                this.hitboxScale = 0.7;
+                this.hitboxWidth = this.width * this.hitboxScale;
+                this.hitboxHeight = this.height * this.hitboxScale;
+                this.hitboxOffsetX = (this.width - this.hitboxWidth) / 2;
+                this.hitboxOffsetY = (this.height - this.hitboxHeight) / 2;
+            }
+
+            jump() {
+                this.velocity = JUMP_STRENGTH;
+            }
+
+            update() {
+                this.velocity += GRAVITY;
+                this.y += this.velocity;
+
+                if (this.y < 0) {
+                    this.y = 0;
+                    this.velocity = 0;
+                }
+                if (this.y > SCREEN_HEIGHT - this.height) {
+                    this.y = SCREEN_HEIGHT - this.height;
+                    this.velocity = 0;
+                }
+            }
+
+            draw() {
+                if (this.image) {
+                    ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+                } else {
+                    ctx.fillStyle = '#0066FF';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                }
+            }
+
+            getRect() {
+                // Return smaller hitbox for more forgiving gameplay
+                return {
+                    x: this.x + this.hitboxOffsetX,
+                    y: this.y + this.hitboxOffsetY,
+                    width: this.hitboxWidth,
+                    height: this.hitboxHeight
+                };
+            }
+        }
+
+        // Obstacle class
+        class Obstacle {
+            constructor(x, y, imageIndex, movementType) {
+                this.x = x;
+                this.y = y;
+                this.movementType = movementType;
+                this.baseSpeed = OBSTACLE_SPEED + (Math.random() * 2 - 1);
+                this.image = gameState.images[`obstacle_${imageIndex}`];
+                
+                // Scale image
+                if (this.image) {
+                    const scaleFactor = 0.5 + Math.random() * 0.7;
+                    this.width = Math.floor(this.image.width * scaleFactor);
+                    this.height = Math.floor(this.image.height * scaleFactor);
+                } else {
+                    this.width = 50;
+                    this.height = 50;
+                }
+
+                // Hitbox size reduction (70% of image size, centered)
+                this.hitboxScale = 0.65;
+                this.hitboxWidth = this.width * this.hitboxScale;
+                this.hitboxHeight = this.height * this.hitboxScale;
+                this.hitboxOffsetX = (this.width - this.hitboxWidth) / 2;
+                this.hitboxOffsetY = (this.height - this.hitboxHeight) / 2;
+
+                // Movement parameters
+                this.verticalSpeed = movementType === 'diagonal' ? (Math.random() * 4 - 2) : 0;
+                this.oscillationAmplitude = movementType === 'oscillating' ? (20 + Math.random() * 40) : 0;
+                this.oscillationSpeed = movementType === 'oscillating' ? (0.05 + Math.random() * 0.1) : 0;
+                this.oscillationOffset = 0;
+                this.baseY = y;
+            }
+
+            update() {
+                this.x -= this.baseSpeed;
+
+                if (this.movementType === 'diagonal') {
+                    this.y += this.verticalSpeed;
+                    if (this.y <= 0 || this.y >= SCREEN_HEIGHT - this.height) {
+                        this.verticalSpeed *= -1;
+                    }
+                } else if (this.movementType === 'oscillating') {
+                    this.oscillationOffset += this.oscillationSpeed;
+                    this.y = this.baseY + this.oscillationAmplitude * Math.sin(this.oscillationOffset);
+                    if (this.y < 0) this.y = 0;
+                    if (this.y > SCREEN_HEIGHT - this.height) this.y = SCREEN_HEIGHT - this.height;
+                }
+            }
+
+            draw() {
+                if (this.image) {
+                    // Enable image smoothing for better quality
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+                    
+                    // Debug: Draw hitbox outline (comment out for production)
+                    // ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+                    // ctx.lineWidth = 2;
+                    // ctx.strokeRect(this.x + this.hitboxOffsetX, this.y + this.hitboxOffsetY, this.hitboxWidth, this.hitboxHeight);
+                } else {
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                }
+            }
+
+            getRect() {
+                // Return smaller hitbox instead of full image size
+                return {
+                    x: this.x + this.hitboxOffsetX,
+                    y: this.y + this.hitboxOffsetY,
+                    width: this.hitboxWidth,
+                    height: this.hitboxHeight
+                };
+            }
+
+            isOffScreen() {
+                return this.x + this.width < 0;
+            }
+        }
+
+        // Check collision
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+
+        // Initialize game
+        function initGame() {
+            gameState.player = new Player(100, SCREEN_HEIGHT / 2);
+            gameState.obstacles = [];
+            gameState.score = 0;
+            gameState.gameOver = false;
+            gameState.frameCount = 0;
+            gameState.bgOffset = 0;
+        }
+
+        // Spawn obstacle
+        function spawnObstacle() {
+            const imageIndex = Math.floor(Math.random() * imagePaths.obstacles.length);
+            const movementTypes = ['horizontal', 'diagonal', 'oscillating'];
+            const movementType = movementTypes[Math.floor(Math.random() * movementTypes.length)];
+            const y = 50 + Math.random() * (SCREEN_HEIGHT - 200);
+            
+            gameState.obstacles.push(new Obstacle(SCREEN_WIDTH, y, imageIndex, movementType));
+        }
+
+        // Update game
+        function update() {
+            if (gameState.gameOver) return;
+
+            gameState.frameCount++;
+            gameState.bgOffset = (gameState.bgOffset - SCROLL_SPEED) % SCREEN_WIDTH;
+
+            gameState.player.update();
+
+            if (gameState.frameCount % OBSTACLE_SPAWN_RATE === 0) {
+                spawnObstacle();
+            }
+
+            for (let i = gameState.obstacles.length - 1; i >= 0; i--) {
+                const obstacle = gameState.obstacles[i];
+                obstacle.update();
+                
+                if (obstacle.isOffScreen()) {
+                    gameState.obstacles.splice(i, 1);
+                    gameState.score++;
+                } else if (checkCollision(gameState.player.getRect(), obstacle.getRect())) {
+                    gameState.gameOver = true;
+                }
+            }
+        }
+
+        // Draw game
+        function draw() {
+            // Clear the canvas first to prevent image stacking
+            ctx.clearRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+            
+            // Draw background
+            const bg = gameState.images.background;
+            if (bg) {
+                ctx.drawImage(bg, gameState.bgOffset, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+                ctx.drawImage(bg, gameState.bgOffset + SCREEN_WIDTH, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+            } else {
+                ctx.fillStyle = '#87CEEB';
+                ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+            }
+
+            // Draw player
+            gameState.player.draw();
+
+            // Draw obstacles
+            gameState.obstacles.forEach(obstacle => obstacle.draw());
+
+            // Draw score
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '36px Arial';
+            ctx.fillText(`Score: ${gameState.score}`, 10, 40);
+
+            // Draw game over
+            if (gameState.gameOver) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+                ctx.fillStyle = '#FF0000';
+                ctx.font = '72px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('GAME OVER', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 60);
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = '36px Arial';
+                ctx.fillText(`Final Score: ${gameState.score}`, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+                ctx.fillText('Press SPACEBAR to Restart', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 60);
+                ctx.textAlign = 'left';
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (gameState.gameOver) {
+                    initGame();
+                } else {
+                    gameState.player.jump();
+                }
+            }
+        });
+
+        // Start game
+        loadAllImages().then(() => {
+            gameLoop();
+        });
+    </script>
+</body>
+</html>

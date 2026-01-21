@@ -1,0 +1,46 @@
+========================================
+  IF BATCH FILES DON'T WORK
+========================================
+
+Try these methods in order:
+
+METHOD 1: PowerShell
+-------------------
+1. Right-click in the folder
+2. Select "Open in Terminal" or "Open PowerShell window here"
+3. Type: python -m http.server 8000
+4. Press Enter
+5. Open browser: http://localhost:8000/index.html
+
+
+METHOD 2: Command Prompt
+------------------------
+1. Hold Shift and right-click in the folder
+2. Select "Open PowerShell window here" or "Open Command Prompt here"
+3. Type: python -m http.server 8000
+4. Press Enter
+5. Open browser: http://localhost:8000/index.html
+
+
+METHOD 3: Try different Python commands
+----------------------------------------
+In the terminal, try these one at a time:
+  python -m http.server 8000
+  py -m http.server 8000
+  python3 -m http.server 8000
+
+
+METHOD 4: Direct file open (limited)
+------------------------------------
+1. Right-click index.html
+2. Open with your web browser
+Note: Some features may not work without a server
+
+
+NEED HELP?
+----------
+Make sure Python is installed:
+  https://www.python.org/downloads/
+
+Check if Python works:
+  Open terminal and type: python --version

@@ -1,0 +1,36 @@
+========================================
+  QUICK START GUIDE
+========================================
+
+METHOD 1 (Easiest):
+-------------------
+1. Double-click: START_GAME.bat
+2. Wait for browser to open
+3. If browser doesn't open, go to: http://localhost:8000/index.html
+4. KEEP THE SERVER WINDOW OPEN while playing!
+
+
+METHOD 2 (Manual):
+------------------
+1. Open Command Prompt in this folder
+2. Type: python -m http.server 8000
+3. Press Enter
+4. Open browser and go to: http://localhost:8000/index.html
+5. KEEP THE COMMAND PROMPT WINDOW OPEN!
+
+
+TROUBLESHOOTING:
+----------------
+- If port 8000 is busy, try: python -m http.server 8001
+  Then go to: http://localhost:8001/index.html
+
+- If you see "404", make sure you're in the folder with index.html
+
+- If images don't load, check that the Images folder exists
+
+- The server MUST stay running - don't close the window!
+
+
+NEED HELP?
+----------
+Check PLAY_GAME.md for more detailed instructions.

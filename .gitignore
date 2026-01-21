@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Server/test files (not needed for web version)
+CLEAN_START.py
+run_server.py
+start_game.py
+start_server.py
+simple_server.py
+test_simple.py
+FIXED_SERVER.py
+*.bat
+RUN_SERVER.txt
+QUICK_START.txt
+test.html
+server_info.html
+game.html
+
+# Python game version (optional - keep if you want both versions in repo)
+flappy_horse.py
+run_game.py
+requirements.txt
+
+# Terminals
+terminals/
+.cursor/

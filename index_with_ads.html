@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Horse Game</title>
+    
+    <!-- Google AdSense - Replace with YOUR AdSense code -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+     crossorigin="anonymous"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            border: 3px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: #87CEEB;
+        }
+        h1 {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+        }
+        .instructions {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        #loading {
+            color: white;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        
+        /* Ad containers */
+        .ad-container {
+            margin: 20px 0;
+            min-height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .ad-banner {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Banner Ad -->
+    <div class="ad-container">
+        <div class="ad-banner">
+            <!-- Google AdSense Banner Ad (728x90) -->
+            <ins class="adsbygoogle"
+                 style="display:inline-block;width:728px;height:90px"
+                 data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+                 data-ad-slot="YYYYYYYYYY"></ins>
+            <script>
+                 (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
+    </div>
+
+    <h1>🐴 Flappy Horse Game 🐴</h1>
+    <div class="instructions">
+        <strong>Controls:</strong> Press SPACEBAR to jump/flap | Avoid the obstacles!
+    </div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="loading">Loading game assets...</div>
+
+    <!-- Bottom Banner Ad -->
+    <div class="ad-container">
+        <div class="ad-banner">
+            <!-- Google AdSense Banner Ad (728x90) -->
+            <ins class="adsbygoogle"
+                 style="display:inline-block;width:728px;height:90px"
+                 data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+                 data-ad-slot="ZZZZZZZZZZ"></ins>
+            <script>
+                 (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
+    </div>
+
+    <script>
+        // [PASTE YOUR ENTIRE GAME CODE FROM index.html HERE]
+        // Or use: <script src="game.js"></script> and move game code to game.js
+        
+        // Game constants and code from original index.html
+        const SCREEN_WIDTH = 800;
+        const SCREEN_HEIGHT = 600;
+        // ... (rest of game code)
+    </script>
+</body>
+</html>
